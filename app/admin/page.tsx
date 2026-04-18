@@ -1,41 +1,124 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import Link from "next/link"
+import { createClient } from "@/lib/client"
+import type { Profile, Request } from "@/lib/database.types"
 import {
   Shield,
   Users,
-  Flag,
-  BarChart3,
   AlertTriangle,
   CheckCircle,
   Trash2,
   Eye,
+  Loader2,
 } from "lucide-react"
 
-const MOCK_REQUESTS = [
-  { id: "1", title: "React Hooks Help", author: "John Doe", status: "open", reports: 0 },
-  { id: "2", title: "CSS Layout Issue", author: "Jane Smith", status: "solved", reports: 0 },
-  { id: "3", title: "Spam Test", author: "Spam Bot", status: "flagged", reports: 3 },
-]
-
-const MOCK_USERS = [
-  { id: "1", name: "Alice Chen", role: "helper", trustScore: 95 },
-  { id: "2", name: "Bob Smith", role: "seeker", trustScore: 78 },
-]
-
-const ANALYTICS = {
-  totalUsers: 250,
-  totalRequests: 420,
-  solvedRequests: 380,
-  avgResponseTime: "2.3h",
+interface AdminStats {
+  totalUsers: number
+  totalRequests: number
+  solvedRequests: number
+  openRequests: number
+  inProgressRequests: number
+  avgRequestsPerUser: number
 }
 
 export default function AdminPage() {
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<AdminStats>({
+    totalUsers: 0,
+    totalRequests: 0,
+    solvedRequests: 0,
+    openRequests: 0,
+    inProgressRequests: 0,
+    avgRequestsPerUser: 0,
+  })
+  const [users, setUsers] = useState<Profile[]>([])
+  const [requests, setRequests] = useState<Request[]>([])
+  const [flaggedRequests, setFlaggedRequests] = useState<Request[]>([])
+
+  useEffect(() => {
+    fetchAdminData()
+  }, [])
+
+  const fetchAdminData = async () => {
+    setLoading(true)
+    const supabase = createClient()
+
+    // Fetch all users
+    const { data: allUsers } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    // Fetch all requests
+    const { data: allRequests } = await supabase
+      .from("requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    if (allUsers && allRequests) {
+      setUsers(allUsers)
+      setRequests(allRequests)
+
+      // Calculate stats
+      const totalUsers = allUsers.length
+      const totalRequests = allRequests.length
+      const solvedRequests = allRequests.filter(r => r.status === "solved").length
+      const openRequests = allRequests.filter(r => r.status === "open").length
+      const inProgressRequests = allRequests.filter(r => r.status === "in_progress").length
+      const avgRequestsPerUser = totalUsers > 0 ? Math.round((totalRequests / totalUsers) * 10) / 10 : 0
+
+      setStats({
+        totalUsers,
+        totalRequests,
+        solvedRequests,
+        openRequests,
+        inProgressRequests,
+        avgRequestsPerUser,
+      })
+
+      // For now, treat "high" urgency or specific keywords as "flagged"
+      // In a real app, you'd have a reports table
+      const flagged = allRequests.filter(r =>
+        r.urgency === "high" ||
+        r.title.toLowerCase().includes("spam") ||
+        r.description.toLowerCase().includes("spam")
+      )
+      setFlaggedRequests(flagged)
+    }
+
+    setLoading(false)
+  }
+
+  const handleDeleteRequest = async (id: string) => {
+    if (!confirm("Delete this request?")) return
+    const supabase = createClient()
+    await supabase.from("requests").delete().eq("id", id)
+    fetchAdminData()
+  }
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "seeker": return "bg-orange-100 text-orange-700 border-orange-200"
+      case "helper": return "bg-blue-100 text-blue-700 border-blue-200"
+      case "both": return "bg-green-100 text-green-700 border-green-200"
+      default: return "bg-gray-100 text-gray-700 border-gray-200"
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
@@ -54,82 +137,111 @@ export default function AdminPage() {
           <Shield className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold">Admin Panel</h1>
-            <p className="text-muted-foreground">Manage platform and moderate content</p>
+            <p className="text-muted-foreground">Real-time platform analytics and moderation</p>
           </div>
         </div>
 
         {/* Analytics Overview */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
+        <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">Total Users</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{ANALYTICS.totalUsers}</div>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">Total Requests</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{ANALYTICS.totalRequests}</div>
+              <div className="text-2xl font-bold">{stats.totalRequests}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Solved</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">Open</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{ANALYTICS.solvedRequests}</div>
+              <div className="text-2xl font-bold text-orange-600">{stats.openRequests}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Avg Response</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">In Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{ANALYTICS.avgResponseTime}</div>
+              <div className="text-2xl font-bold text-blue-600">{stats.inProgressRequests}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">Solved</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.solvedRequests}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">Req/User</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.avgRequestsPerUser}</div>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="requests">
           <TabsList>
-            <TabsTrigger value="requests">Requests</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="requests">Requests ({requests.length})</TabsTrigger>
+            <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
+            <TabsTrigger value="flagged">Flagged ({flaggedRequests.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" /> Manage Requests
+                  All Requests
                 </CardTitle>
+                <CardDescription>Manage all requests on the platform</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {MOCK_REQUESTS.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{req.title}</p>
-                        <p className="text-sm text-muted-foreground">by {req.author}</p>
+                {requests.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No requests yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {requests.map((req) => (
+                      <div key={req.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{req.title}</p>
+                          <p className="text-sm text-muted-foreground">{req.category} • {new Date(req.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Badge variant={
+                            req.status === "open" ? "default" :
+                            req.status === "solved" ? "secondary" : "outline"
+                          }>
+                            {req.status}
+                          </Badge>
+                          <Badge variant={req.urgency === "high" ? "destructive" : "outline"}>
+                            {req.urgency}
+                          </Badge>
+                          <Link href={`/requests/${req.id}`}>
+                            <Button variant="ghost" size="icon">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteRequest(req.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={req.status === "flagged" ? "destructive" : "secondary"}>
-                          {req.status}
-                        </Badge>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -138,54 +250,73 @@ export default function AdminPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" /> Manage Users
+                  All Users
                 </CardTitle>
+                <CardDescription>Manage platform users</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {MOCK_USERS.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-sm text-muted-foreground">Trust Score: {user.trustScore}%</p>
+                {users.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No users yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {users.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{user.name || "Unnamed User"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Trust: {user.trust_score}% • Joined {new Date(user.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={getRoleBadgeColor(user.role)}>
+                            {user.role}
+                          </Badge>
+                          <Badge variant={user.completed_onboarding ? "secondary" : "destructive"}>
+                            {user.completed_onboarding ? "Onboarded" : "Pending"}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{user.role}</Badge>
-                        <Button variant="ghost" size="sm">View</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="reports">
+          <TabsContent value="flagged">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" /> Flagged Content
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" /> Flagged Content
                 </CardTitle>
+                <CardDescription>High urgency or potentially problematic content</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {MOCK_REQUESTS.filter((r) => r.reports > 0).map((req) => (
-                    <div key={req.id} className="flex items-center justify-between p-3 border border-destructive rounded-lg">
-                      <div>
-                        <p className="font-medium">{req.title}</p>
-                        <p className="text-sm text-muted-foreground">{req.reports} reports</p>
+                {flaggedRequests.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No flagged content</p>
+                ) : (
+                  <div className="space-y-2">
+                    {flaggedRequests.map((req) => (
+                      <div key={req.id} className="flex items-center justify-between p-3 border border-destructive/50 rounded-lg bg-destructive/5">
+                        <div>
+                          <p className="font-medium">{req.title}</p>
+                          <p className="text-sm text-muted-foreground">High urgency • {req.category}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/requests/${req.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="mr-2 h-4 w-4" /> View
+                            </Button>
+                          </Link>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteRequest(req.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <CheckCircle className="mr-2 h-4 w-4" /> Approve
-                        </Button>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="mr-2 h-4 w-4" /> Remove
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>              </CardContent>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

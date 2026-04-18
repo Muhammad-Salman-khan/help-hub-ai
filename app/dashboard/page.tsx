@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { createClient } from "@/lib/client"
+import type { UserRole } from "@/lib/database.types"
 
 interface DashboardRequest {
   id: string
@@ -20,24 +21,41 @@ interface DashboardRequest {
 export default function DashboardPage() {
   const [requests, setRequests] = useState<DashboardRequest[]>([])
   const [stats, setStats] = useState({
-    total: 42,
-    active: 15,
-    solved: 27,
-    helping: 3,
+    total: 0,
+    active: 0,
+    solved: 0,
+    helping: 0,
   })
+  const [role, setRole] = useState<UserRole | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchDashboardData()
   }, [])
 
   const fetchDashboardData = async () => {
+    setLoading(true)
     const supabase = createClient()
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
-    // Fetch user's requests
+    // Fetch user profile with role
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    if (profile) {
+      setRole(profile.role)
+    }
+
+    // Fetch user's requests (for seekers and both)
     const { data: userRequests } = await supabase
       .from("requests")
       .select("*, author:profiles(name)")
@@ -67,7 +85,11 @@ export default function DashboardPage() {
     } else {
       setStats({ total: 0, active: 0, solved: 0, helping: 0 })
     }
+    setLoading(false)
   }
+
+  const canSeek = role === "seeker" || role === "both"
+  const canHelp = role === "helper" || role === "both"
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f6f1e7]">
@@ -81,7 +103,9 @@ export default function DashboardPage() {
           <nav className="hidden sm:flex items-center gap-1">
             <Link href="/dashboard" className="px-3.5 py-1.5 rounded-full bg-[#1a1a1a] text-white text-sm font-medium">Dashboard</Link>
             <Link href="/explore" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Explore</Link>
-            <Link href="/requests/new" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Create Request</Link>
+            {canSeek && (
+              <Link href="/requests/new" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Create Request</Link>
+            )}
             <Link href="/ai-center" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">AI Center</Link>
           </nav>
         </div>
@@ -90,39 +114,62 @@ export default function DashboardPage() {
       {/* Hero Banner */}
       <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
         <div className="bg-[#1b5e47] rounded-2xl sm:rounded-3xl p-8 sm:p-10 lg:p-12 text-white">
-          <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#8cc5a6] mb-4">Dashboard</p>
+          <div className="flex items-center gap-3 mb-4">
+            <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#8cc5a6]">Dashboard</p>
+            {role && (
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full ${
+                role === 'seeker' ? 'bg-orange-400/20 text-orange-200' :
+                role === 'helper' ? 'bg-blue-400/20 text-blue-200' :
+                'bg-[#8cc5a6]/20 text-[#8cc5a6]'
+              }`}>
+                {role}
+              </span>
+            )}
+          </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-[1.1] mb-4 max-w-3xl italic">
-            Your community activity at a glance.
+            {role === 'helper' ? 'Help others grow. Track your impact.' :
+             role === 'seeker' ? 'Get help when you need it.' :
+             'Your community activity at a glance.'}
           </h1>
           <p className="text-[#a3c9b5] text-sm sm:text-base leading-relaxed max-w-2xl">
-            Track your requests, contributions, and matches across the HelpHub platform.
+            {canSeek && canHelp
+              ? "Track your requests, contributions, and matches across the HelpHub platform."
+              : canSeek
+              ? "Post requests and track progress on challenges you're working through."
+              : "Browse requests and track your contributions to the community."}
           </p>
         </div>
       </section>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Role-based display */}
       <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
-            <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#2a7d5f] mb-1">Total</p>
-            <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.total}</p>
-            <p className="text-xs text-[#777]">Requests created</p>
-          </div>
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
-            <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#d4843e] mb-1">Active</p>
-            <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.active}</p>
-            <p className="text-xs text-[#777]">Currently open</p>
-          </div>
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
-            <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#2a7d5f] mb-1">Solved</p>
-            <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.solved}</p>
-            <p className="text-xs text-[#777]">Problems resolved</p>
-          </div>
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
-            <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#4a90a4] mb-1">Helping</p>
-            <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.helping}</p>
-            <p className="text-xs text-[#777]">Currently assisting</p>
-          </div>
+        <div className={`grid gap-4 ${canSeek && canHelp ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
+          {canSeek && (
+            <>
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
+                <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#2a7d5f] mb-1">Total</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.total}</p>
+                <p className="text-xs text-[#777]">Requests created</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
+                <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#d4843e] mb-1">Active</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.active}</p>
+                <p className="text-xs text-[#777]">Currently open</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
+                <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#2a7d5f] mb-1">Solved</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.solved}</p>
+                <p className="text-xs text-[#777]">Problems resolved</p>
+              </div>
+            </>
+          )}
+          {canHelp && (
+            <div className={`bg-white/60 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-[#e5ddd0] ${!canSeek ? 'sm:col-span-1' : ''}`}>
+              <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#4a90a4] mb-1">Helping</p>
+              <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-1">{stats.helping}</p>
+              <p className="text-xs text-[#777]">{canSeek ? 'Currently assisting' : 'People helped'}</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -132,16 +179,28 @@ export default function DashboardPage() {
           {/* Recent Requests */}
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-[#e5ddd0]">
             <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#2a7d5f] mb-3">Activity</p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-6">Recent requests</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-6">
+              {canSeek ? 'Your requests' : 'Requests you\'re helping with'}
+            </h2>
 
             {requests.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-sm text-[#777] mb-4">No requests yet. Be the first to post!</p>
-                <Link href="/requests/new">
-                  <Button className="bg-[#2a7d5f] hover:bg-[#1f6a4e] text-white rounded-full px-6 py-2.5 text-sm font-semibold cursor-pointer">
-                    Create Request
-                  </Button>
-                </Link>
+                <p className="text-sm text-[#777] mb-4">
+                  {canSeek ? "No requests yet. Be the first to post!" : "You're not helping with any requests yet. Browse and offer help!"}
+                </p>
+                {canSeek ? (
+                  <Link href="/requests/new">
+                    <Button className="bg-[#2a7d5f] hover:bg-[#1f6a4e] text-white rounded-full px-6 py-2.5 text-sm font-semibold cursor-pointer">
+                      Create Request
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/explore">
+                    <Button className="bg-[#2a7d5f] hover:bg-[#1f6a4e] text-white rounded-full px-6 py-2.5 text-sm font-semibold cursor-pointer">
+                      Browse Requests
+                    </Button>
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -181,11 +240,13 @@ export default function DashboardPage() {
               <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#c74a2c] mb-3">Quick Actions</p>
               <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-5">Jump in</h3>
               <div className="space-y-3">
-                <Link href="/requests/new" className="block">
-                  <Button className="w-full bg-[#2a7d5f] hover:bg-[#1f6a4e] text-white rounded-full h-11 text-sm font-semibold cursor-pointer">
-                    Create request
-                  </Button>
-                </Link>
+                {canSeek && (
+                  <Link href="/requests/new" className="block">
+                    <Button className="w-full bg-[#2a7d5f] hover:bg-[#1f6a4e] text-white rounded-full h-11 text-sm font-semibold cursor-pointer">
+                      Create request
+                    </Button>
+                  </Link>
+                )}
                 <Link href="/explore" className="block">
                   <Button variant="outline" className="w-full rounded-full h-11 text-sm font-semibold border-[#c9c1b2] text-[#1a1a1a] hover:bg-[#ece5d8] cursor-pointer">
                     Browse requests
