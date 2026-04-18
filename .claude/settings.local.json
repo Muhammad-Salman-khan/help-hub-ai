@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import fitz; doc = fitz.open\\('/c/Users/Salman/Desktop/Helplytics Ai – Grand Coding Night Official April 2026.pdf'\\); [print\\(page.get_text\\(\\)\\) for page in doc]\")",
+      "Bash(python -c \"import PyPDF2; reader = PyPDF2.PdfReader\\(open\\('/c/Users/Salman/Desktop/Helplytics Ai – Grand Coding Night Official April 2026.pdf', 'rb'\\)\\); [print\\(page.extract_text\\(\\)\\) for page in reader.pages]\")",
+      "Bash(file *)",
+      "Bash(bun dev *)"
+    ]
+  }
+}
