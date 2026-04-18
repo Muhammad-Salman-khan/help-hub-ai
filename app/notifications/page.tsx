@@ -1,209 +1,72 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import {
-  Bell,
-  MessageSquare,
-  CheckCircle,
-  User,
-  HelpCircle,
-  TrendingUp,
-  Settings,
-  Trash2,
-} from "lucide-react"
 
 const NOTIFICATIONS = [
-  {
-    id: "1",
-    type: "request",
-    title: "New help request",
-    description: "Someone needs help with React Hooks in your area",
-    time: "5 min ago",
-    read: false,
-    link: "/explore",
-  },
-  {
-    id: "2",
-    type: "message",
-    title: "New message",
-    description: "Alice sent you a message about your request",
-    time: "1 hour ago",
-    read: false,
-    link: "/messages",
-  },
-  {
-    id: "3",
-    type: "solved",
-    title: "Request solved",
-    description: "Your request 'Help with TypeScript' was marked as solved",
-    time: "3 hours ago",
-    read: true,
-    link: "/dashboard",
-  },
-  {
-    id: "4",
-    type: "helper",
-    title: "Someone can help",
-    description: "Mike offered to help with your request",
-    time: "5 hours ago",
-    read: true,
-    link: "/dashboard",
-  },
-  {
-    id: "5",
-    type: "trending",
-    title: "Trending in your skills",
-    description: "Python requests are up 25% this week",
-    time: "1 day ago",
-    read: true,
-    link: "/ai-center",
-  },
+  { message: '"Need help" was marked as solved', type: "Status", time: "Just now", read: false },
+  { message: 'Ayesha Khan offered help on "Need help"', type: "Match", time: "Just now", read: false },
+  { message: 'Your request "Need help" is now live in the community feed', type: "Request", time: "Just now", read: false },
+  { message: '"Need help making my portfolio responsive before demo day" was marked as solved', type: "Status", time: "Just now", read: false },
+  { message: '"Need help making my portfolio responsive before demo day" was marked as solved', type: "Status", time: "Just now", read: false },
+  { message: '"Need help making my portfolio responsive before demo day" was marked as solved', type: "Status", time: "Just now", read: false },
+  { message: "New helper matched to your responsive portfolio request", type: "Match", time: "12 min ago", read: false },
+  { message: "Your trust score increased after a solved request", type: "Reputation", time: "1 hr ago", read: false },
+  { message: "AI Center detected rising demand for interview prep", type: "Insight", time: "Today", read: true },
 ]
 
-const getIcon = (type: string) => {
-  switch (type) {
-    case "request": return <HelpCircle className="h-5 w-5 text-blue-500" />
-    case "message": return <MessageSquare className="h-5 w-5 text-green-500" />
-    case "solved": return <CheckCircle className="h-5 w-5 text-green-500" />
-    case "helper": return <User className="h-5 w-5 text-purple-500" />
-    case "trending": return <TrendingUp className="h-5 w-5 text-orange-500" />
-    default: return <Bell className="h-5 w-5" />
-  }
-}
-
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(NOTIFICATIONS)
-
-  const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })))
-  }
-
-  const clearAll = () => {
-    setNotifications([])
-  }
-
-  const unreadCount = notifications.filter((n) => !n.read).length
-
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-14 items-center justify-between">
-          <Link href="/" className="font-bold text-xl">Helplytics</Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/explore">Explore</Link>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/profile">Profile</Link>
+    <div className="flex flex-col min-h-screen bg-[#f6f1e7]">
+      {/* Navbar */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#f6f1e7]/90 border-b border-[#e5ddd0]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="h-8 w-8 bg-[#2a7d5f] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">H</div>
+            <span className="font-semibold text-[#1a1a1a] text-base">HelpHub AI</span>
+          </Link>
+          <nav className="hidden sm:flex items-center gap-1">
+            <Link href="/dashboard" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Dashboard</Link>
+            <Link href="/explore" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Explore</Link>
+            <Link href="/notifications" className="px-3.5 py-1.5 rounded-full bg-[#1a1a1a] text-white text-sm font-medium">Notifications</Link>
           </nav>
         </div>
       </header>
 
-      <div className="container py-8 max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Bell className="h-6 w-6" />
-            <div>
-              <h1 className="text-2xl font-bold">Notifications</h1>
-              <p className="text-muted-foreground">
-                {unreadCount} unread
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={markAllRead}>
-              Mark all read
-            </Button>
-            <Button variant="ghost" size="icon" onClick={clearAll}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+      {/* Hero Banner */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        <div className="bg-[#1b5e47] rounded-2xl sm:rounded-3xl p-8 sm:p-10 lg:p-12 text-white">
+          <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#8cc5a6] mb-4">Notifications</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-[1.1] mb-4 max-w-3xl italic">
+            Stay updated on requests, helpers, and trust signals.
+          </h1>
+        </div>
+      </section>
+
+      {/* Notification Feed */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-[#e5ddd0]">
+          <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#2a7d5f] mb-3">Live Updates</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-6">Notification feed</h2>
+
+          <div className="divide-y divide-[#e5ddd0]">
+            {NOTIFICATIONS.map((notif, i) => (
+              <div key={i} className="flex items-start sm:items-center justify-between gap-4 py-4 sm:py-5">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-[#1a1a1a] leading-snug">{notif.message}</p>
+                  <p className="text-xs text-[#777] mt-1">{notif.type} • {notif.time}</p>
+                </div>
+                <span className={`text-xs font-semibold rounded-full px-3 py-1 shrink-0 ${
+                  notif.read
+                    ? "bg-[#e5ddd0] text-[#777]"
+                    : "bg-white border border-[#d5cec0] text-[#1a1a1a]"
+                }`}>
+                  {notif.read ? "Read" : "Unread"}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-
-        <Tabs defaultValue="all">
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">
-              All{" "}
-              <Badge variant="secondary" className="ml-2">{notifications.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="unread">
-              Unread{" "}
-              <Badge variant="secondary" className="ml-2">{unreadCount}</Badge>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="space-y-2">
-            {notifications.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No notifications</p>
-                </CardContent>
-              </Card>
-            ) : (
-              notifications.map((notification) => (
-                <Link key={notification.id} href={notification.link}>
-                  <Card className={`hover:bg-muted transition-colors ${!notification.read ? "border-primary" : ""}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="mt-1">{getIcon(notification.type)}</div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium">{notification.title}</p>
-                            <span className="text-xs text-muted-foreground">{notification.time}</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{notification.description}</p>
-                        </div>
-
-                        {!notification.read && (
-                          <div className="h-2 w-2 bg-primary rounded-full"></div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="unread" className="space-y-2">
-            {notifications.filter((n) => !n.read).length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-                  <p className="text-muted-foreground">All caught up!</p>
-                </CardContent>
-              </Card>
-            ) : (
-              notifications
-                .filter((n) => !n.read)
-                .map((notification) => (
-                  <Link key={notification.id} href={notification.link}>
-                    <Card className="border-primary hover:bg-muted transition-colors">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="mt-1">{getIcon(notification.type)}</div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className="font-medium">{notification.title}</p>
-                              <span className="text-xs text-muted-foreground">{notification.time}</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{notification.description}</p>
-                          </div>
-                          <div className="h-2 w-2 bg-primary rounded-full"></div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+      </section>
     </div>
   )
 }

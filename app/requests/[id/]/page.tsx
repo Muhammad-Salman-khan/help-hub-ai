@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/client"
 
-interface Request {
+interface RequestDetail {
   id: string
   title: string
   description: string
@@ -32,9 +32,9 @@ interface Request {
   tags: string[]
   author: {
     id: string
-    name: string
-    location?: string
-    bio?: string
+    name: string | null
+    location?: string | null
+    bio?: string | null
   }
 }
 
@@ -47,7 +47,7 @@ interface Helper {
 export default function RequestDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [request, setRequest] = useState<Request | null>(null)
+  const [request, setRequest] = useState<RequestDetail | null>(null)
   const [helpers, setHelpers] = useState<Helper[]>([])
   const [isHelping, setIsHelping] = useState(false)
   const [aiSummary, setAiSummary] = useState("")
@@ -65,11 +65,14 @@ export default function RequestDetailPage() {
   }
 
   const fetchRequest = async () => {
+    if (!params.id) return
+
+    const id = Array.isArray(params.id) ? params.id[0] : params.id
     const supabase = createClient()
     const { data } = await supabase
       .from("requests")
       .select("*, author:profiles(id, name, location, bio)")
-      .eq("id", params.id)
+      .eq("id", id)
       .single()
 
     if (data) {
@@ -86,7 +89,7 @@ export default function RequestDetailPage() {
     const { data: helpersData } = await supabase
       .from("request_helpers")
       .select("*, helper:profiles(id, name)")
-      .eq("request_id", params.id)
+      .eq("request_id", id)
 
     if (helpersData) {
       setHelpers(helpersData.map((h: any) => ({
@@ -120,18 +123,19 @@ export default function RequestDetailPage() {
   }
 
   const handleMarkSolved = async () => {
+    if (!params.id || !request) return
     const supabase = createClient()
     await supabase
       .from("requests")
       .update({ status: "solved" })
-      .eq("id", params.id)
+      .eq("id", request.id)
     fetchRequest()
   }
 
-  const getUrgencyColor = (urgency: string) => {
+  const getUrgencyColor = (urgency: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (urgency) {
       case "high": return "destructive"
-      case "medium": return "warning"
+      case "medium": return "default"
       default: return "secondary"
     }
   }

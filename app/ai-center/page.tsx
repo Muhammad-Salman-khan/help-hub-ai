@@ -1,275 +1,106 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import {
-  Sparkles,
-  TrendingUp,
-  Lightbulb,
-  Target,
-  Zap,
-  BarChart3,
-  Users,
-  CheckCircle,
-} from "lucide-react"
 
-const AI_INSIGHTS = [
+const RECOMMENDATIONS = [
   {
-    id: "1",
-    type: "trend",
-    title: "React Hooks trending",
-    description: "25% increase in React-related help requests this week",
-    impact: "high",
+    title: "Need help",
+    summary: "AI summary: Web Development request with high urgency. Best suited for members with relevant expertise.",
+    tags: [{ label: "Web Development", color: "bg-[#2a7d5f]" }, { label: "High", color: "bg-[#c74a2c]" }],
   },
   {
-    id: "2",
-    type: "opportunity",
-    title: "Career mentorship gap",
-    description: "High demand for interview prep, few helpers available",
-    impact: "medium",
+    title: "Need help making my portfolio responsive before demo day",
+    summary: "Responsive layout issue with a short deadline. Best helpers are frontend mentors comfortable with CSS grids and media queries.",
+    tags: [{ label: "Web Development", color: "bg-[#2a7d5f]" }, { label: "High", color: "bg-[#c74a2c]" }],
   },
   {
-    id: "3",
-    type: "suggestion",
-    title: "Update your skills",
-    description: "Add TypeScript to your profile - matches 12 open requests",
-    impact: "low",
+    title: "Looking for Figma feedback on a volunteer event poster",
+    summary: "A visual design critique request where feedback on hierarchy, spacing, and messaging would create the most value.",
+    tags: [{ label: "Design", color: "bg-[#2a7d5f]" }, { label: "Medium", color: "bg-[#5e8a7c]" }],
   },
-]
-
-const CATEGORY_STATS = [
-  { category: "Programming", requests: 156, helpers: 89, trend: "+12%" },
-  { category: "Design", requests: 78, helpers: 45, trend: "+5%" },
-  { category: "Career", requests: 45, helpers: 23, trend: "+18%" },
-  { category: "Academic", requests: 34, helpers: 28, trend: "-3%" },
+  {
+    title: "Need mock interview support for internship applications",
+    summary: "Career coaching request focused on confidence-building, behavioral answers, and entry-level frontend interviews.",
+    tags: [{ label: "Career", color: "bg-[#2a7d5f]" }, { label: "Low", color: "bg-[#5e8a7c]" }],
+  },
 ]
 
 export default function AICenterPage() {
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-14 items-center justify-between">
-          <Link href="/" className="font-bold text-xl">Helplytics</Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/explore">Explore</Link>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/profile">Profile</Link>
+    <div className="flex flex-col min-h-screen bg-[#f6f1e7]">
+      {/* Navbar */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#f6f1e7]/90 border-b border-[#e5ddd0]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="h-8 w-8 bg-[#2a7d5f] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">H</div>
+            <span className="font-semibold text-[#1a1a1a] text-base">HelpHub AI</span>
+          </Link>
+          <nav className="hidden sm:flex items-center gap-1">
+            <Link href="/dashboard" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Dashboard</Link>
+            <Link href="/requests/new" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Create Request</Link>
+            <Link href="/ai-center" className="px-3.5 py-1.5 rounded-full bg-[#1a1a1a] text-white text-sm font-medium">AI Center</Link>
           </nav>
         </div>
       </header>
 
-      <div className="container py-8">
-        <div className="flex items-center gap-3 mb-8">
-          <Sparkles className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">AI Center</h1>
-            <p className="text-muted-foreground">Smart insights and recommendations</p>
+      {/* Hero Banner */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        <div className="bg-[#1b5e47] rounded-2xl sm:rounded-3xl p-8 sm:p-10 lg:p-12 text-white relative overflow-hidden">
+          <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#8cc5a6] mb-4">AI Center</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-[1.1] mb-4 max-w-3xl">
+            See what the platform intelligence is noticing.
+          </h1>
+          <p className="text-[#a3c9b5] text-sm sm:text-base leading-relaxed max-w-2xl">
+            AI-like insights summarize demand trends, helper readiness, urgency signals, and request recommendations.
+          </p>
+        </div>
+      </section>
+
+      {/* Stats Cards */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 sm:p-7 border border-[#e5ddd0]">
+            <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#2a7d5f] mb-2">Trend Pulse</p>
+            <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-2">Web Development</p>
+            <p className="text-xs sm:text-sm text-[#777] leading-relaxed">Most common support area based on active community requests.</p>
+          </div>
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 sm:p-7 border border-[#e5ddd0]">
+            <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#c74a2c] mb-2">Urgency Watch</p>
+            <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-2">2</p>
+            <p className="text-xs sm:text-sm text-[#777] leading-relaxed">Requests currently flagged high priority by the urgency detector.</p>
+          </div>
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 sm:p-7 border border-[#e5ddd0]">
+            <p className="text-[10px] sm:text-xs font-bold tracking-[0.12em] uppercase text-[#2a7d5f] mb-2">Mentor Pool</p>
+            <p className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-2">2</p>
+            <p className="text-xs sm:text-sm text-[#777] leading-relaxed">Trusted helpers with strong response history and contribution signals.</p>
           </div>
         </div>
+      </section>
 
-        <Tabs defaultValue="insights" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="insights">Insights</TabsTrigger>
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
-          </TabsList>
+      {/* AI Recommendations */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border border-[#e5ddd0]">
+          <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#2a7d5f] mb-3">AI Recommendations</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-8">Requests needing attention</h2>
 
-          <TabsContent value="insights" className="space-y-6">
-            {/* Stats Overview */}
-            <div className="grid md:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">AI Matches Today</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">47</div>
-                  <div className="text-xs text-green-500 flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" /> +12% from yesterday
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">87%</div>
-                  <div className="text-xs text-muted-foreground">Requests resolved</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">2.3h</div>
-                  <div className="text-xs text-green-500 flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" /> Faster than avg
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Your Impact</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">12</div>
-                  <div className="text-xs text-muted-foreground">People helped</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Insights Feed */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-amber-500" />
-                  AI Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {AI_INSIGHTS.map((insight) => (
-                  <div key={insight.id} className="flex gap-4 p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium">{insight.title}</p>
-                        <Badge
-                          variant={insight.impact === "high" ? "destructive" : "secondary"}
-                        >
-                          {insight.impact}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{insight.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="trends">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Category Trends
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {CATEGORY_STATS.map((stat) => (
-                      <div key={stat.category}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium">{stat.category}</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">
-                              {stat.requests} requests
-                            </span>
-                            <Badge variant="outline">{stat.trend}</Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Progress value={(stat.helpers / stat.requests) * 100} className="flex-1" />
-                          <span className="text-xs text-muted-foreground w-12">
-                            {Math.round((stat.helpers / stat.requests) * 100)}%
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-yellow-500" />
-                    Hot Topics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      "React Hooks",
-                      "TypeScript",
-                      "Career Change",
-                      "System Design",
-                      "UI Design",
-                      "Python",
-                      "Interview Prep",
-                      "Freelancing",
-                    ].map((topic) => (
-                      <Badge key={topic} variant="secondary" className="text-sm py-1 px-3">
-                        {topic}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="suggestions">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    For You
-                  </CardTitle>
-                  <CardDescription>Based on your skills and interests</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <p className="font-medium">Add TypeScript skill</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      12 open requests match this skill
-                    </p>
-                  </div>
-
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Users className="h-5 w-5 text-blue-500" />
-                      <p className="font-medium">Help with React Hooks</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      5 people need help with this topic
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Community Needs</CardTitle>
-                  <CardDescription>Areas with high demand</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-950">
-                    <p className="font-medium text-red-700 dark:text-red-300">
-                      Career mentorship gap
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      23 requests, only 8 helpers available
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          <div className="space-y-4">
+            {RECOMMENDATIONS.map((rec, i) => (
+              <div key={i} className="bg-[#f6f1e7]/60 rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-[#e5ddd0] hover:shadow-sm transition-shadow">
+                <h3 className="font-bold text-sm sm:text-base text-[#1a1a1a] mb-2">{rec.title}</h3>
+                <p className="text-xs sm:text-sm text-[#777] leading-relaxed mb-3">{rec.summary}</p>
+                <div className="flex flex-wrap gap-2">
+                  {rec.tags.map((tag, j) => (
+                    <Badge key={j} className={`${tag.color} text-white text-[11px] sm:text-xs rounded-full px-3 py-0.5 font-medium border-0`}>
+                      {tag.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

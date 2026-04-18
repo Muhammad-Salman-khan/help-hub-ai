@@ -1,247 +1,137 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
-import { ArrowLeft, Send, MoreVertical, Phone, Video } from "lucide-react"
-import { createClient } from "@/lib/client"
 
-interface Message {
-  id: string
-  content: string
-  sender_id: string
-  created_at: string
-}
+const MESSAGES = [
+  {
+    from: "Ayesha Khan",
+    to: "Sara Noor",
+    message: "I checked your portfolio request. Share the breakpoint screenshots and I can suggest fixes.",
+    time: "09:45 AM",
+  },
+  {
+    from: "Hassan Ali",
+    to: "Ayesha Khan",
+    message: "Your event poster concept is solid. I would tighten the CTA and reduce the background texture.",
+    time: "11:10 AM",
+  },
+]
 
-interface Conversation {
-  id: string
-  user: {
-    id: string
-    name: string
-  }
-  lastMessage: string
-  unread: number
-}
+const USERS = ["Ayesha Khan", "Sara Noor", "Hassan Ali"]
 
 export default function MessagesPage() {
-  const [conversations, setConversations] = useState<Conversation[]>([
-    {
-      id: "1",
-      user: { id: "user1", name: "Alice Chen" },
-      lastMessage: "Thanks for offering to help!",
-      unread: 2,
-    },
-    {
-      id: "2",
-      user: { id: "user2", name: "Bob Smith" },
-      lastMessage: "Can you explain that again?",
-      unread: 0,
-    },
-  ])
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState("")
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [selectedUser, setSelectedUser] = useState("Ayesha Khan")
+  const [messageText, setMessageText] = useState("")
 
-  useEffect(() => {
-    fetchCurrentUser()
-  }, [])
-
-  useEffect(() => {
-    if (selectedChat) {
-      fetchMessages(selectedChat)
-    }
-  }, [selectedChat])
-
-  const fetchCurrentUser = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    setCurrentUser(user)
-  }
-
-  const fetchMessages = async (conversationId: string) => {
-    // Mock messages for now
-    setMessages([
-      {
-        id: "1",
-        content: "Hi! I saw your request about React hooks.",
-        sender_id: "other",
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-      },
-      {
-        id: "2",
-        content: "Yes, I'm having trouble understanding useEffect.",
-        sender_id: "me",
-        created_at: new Date(Date.now() - 3000000).toISOString(),
-      },
-      {
-        id: "3",
-        content: "I'd be happy to help! When are you free?",
-        sender_id: "other",
-        created_at: new Date(Date.now() - 600000).toISOString(),
-      },
-    ])
-  }
-
-  const sendMessage = async (e: React.FormEvent) => {
+  const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim()) return
-
-    const message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender_id: currentUser?.id || "me",
-      created_at: new Date().toISOString(),
-    }
-
-    setMessages([...messages, message])
-    setNewMessage("")
+    if (!messageText.trim()) return
+    setMessageText("")
   }
-
-  const selectedUser = conversations.find((c) => c.id === selectedChat)?.user
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-14 items-center">
-          <Link href="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />
-            Back
+    <div className="flex flex-col min-h-screen bg-[#f6f1e7]">
+      {/* Navbar */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#f6f1e7]/90 border-b border-[#e5ddd0]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="h-8 w-8 bg-[#2a7d5f] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">H</div>
+            <span className="font-semibold text-[#1a1a1a] text-base">HelpHub AI</span>
           </Link>
+          <nav className="hidden sm:flex items-center gap-1">
+            <Link href="/dashboard" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Dashboard</Link>
+            <Link href="/explore" className="px-3.5 py-1.5 rounded-full text-[#555] text-sm font-medium hover:bg-[#ece5d8] transition-colors">Explore</Link>
+            <Link href="/messages" className="px-3.5 py-1.5 rounded-full bg-[#1a1a1a] text-white text-sm font-medium">Messages</Link>
+          </nav>
         </div>
       </header>
 
-      <div className="container py-4 h-[calc(100vh-3.5rem)]">
-        <div className="grid md:grid-cols-3 gap-4 h-full">
-          {/* Conversations List */}
-          <Card className="md:col-span-1 overflow-hidden">
-            <div className="p-4 border-b">
-              <h2 className="font-semibold">Messages</h2>
-            </div>
-            <ScrollArea className="h-[calc(100%-3.5rem)]">
-              <div className="divide-y">
-                {conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => setSelectedChat(conv.id)}
-                    className={`w-full p-4 text-left hover:bg-muted transition-colors ${
-                      selectedChat === conv.id ? "bg-muted" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>{conv.user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium truncate">{conv.user.name}</p>
-                          {conv.unread > 0 && (
-                            <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5">
-                              {conv.unread}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {conv.lastMessage}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
-          </Card>
-
-          {/* Chat Area */}
-          <Card className="md:col-span-2 flex flex-col">
-            {selectedChat ? (
-              <>
-                {/* Chat Header */}
-                <div className="p-4 border-b flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback>{selectedUser?.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{selectedUser?.name}</p>
-                      <p className="text-xs text-muted-foreground">Online</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Video className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${
-                          msg.sender_id === currentUser?.id || msg.sender_id === "me"
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                            msg.sender_id === currentUser?.id || msg.sender_id === "me"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
-                          }`}
-                        >
-                          <p>{msg.content}</p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {new Date(msg.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-
-                {/* Input */}
-                <div className="p-4 border-t">
-                  <form onSubmit={sendMessage} className="flex gap-2">
-                    <Input
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
-                      className="flex-1"
-                    />
-                    <Button type="submit" size="icon">
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </form>
-                </div>
-              </>
-            ) : (
-              <CardContent className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-muted-foreground">Select a conversation</p>
-                </div>
-              </CardContent>
-            )}
-          </Card>
+      {/* Hero Banner */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        <div className="bg-[#1b5e47] rounded-2xl sm:rounded-3xl p-8 sm:p-10 lg:p-12 text-white">
+          <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#8cc5a6] mb-4">Interaction / Messaging</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-[1.1] mb-4 max-w-3xl italic">
+            Keep support moving through direct communication.
+          </h1>
+          <p className="text-[#a3c9b5] text-sm sm:text-base leading-relaxed max-w-2xl">
+            Basic messaging gives helpers and requesters a clear follow-up path once a match happens.
+          </p>
         </div>
-      </div>
+      </section>
+
+      {/* Content */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
+          {/* Conversation Stream */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-[#e5ddd0]">
+            <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#2a7d5f] mb-3">Conversation Stream</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-6">Recent messages</h2>
+
+            <div className="space-y-4">
+              {MESSAGES.map((msg, i) => (
+                <div key={i} className="bg-[#f6f1e7]/60 rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-[#e5ddd0]">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-bold text-sm text-[#1a1a1a] mb-2">
+                        {msg.from} → {msg.to}
+                      </p>
+                      <p className="text-xs sm:text-sm text-[#777] leading-relaxed">{msg.message}</p>
+                    </div>
+                    <div className="bg-[#e5f5ee] text-[#2a7d5f] text-[11px] sm:text-xs font-semibold rounded-xl px-3 py-1.5 shrink-0 text-center leading-tight">
+                      {msg.time}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Send Message */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-[#e5ddd0]">
+            <p className="text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase text-[#c74a2c] mb-3">Send Message</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] mb-6">
+              Start a
+              <br />
+              conversation
+            </h2>
+
+            <form onSubmit={handleSend} className="space-y-5">
+              <div>
+                <label className="text-sm font-medium text-[#1a1a1a] mb-1.5 block">To</label>
+                <select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="w-full rounded-xl border border-[#d5cec0] bg-white/80 h-11 px-4 text-sm text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#2a7d5f]/20"
+                >
+                  {USERS.map((user) => (
+                    <option key={user} value={user}>{user}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-[#1a1a1a] mb-1.5 block">Message</label>
+                <Textarea
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Share support details, ask for files, or suggest next steps."
+                  className="rounded-xl border-[#d5cec0] bg-white/80 min-h-[120px] text-sm resize-y"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-[#2a7d5f] hover:bg-[#1f6a4e] text-white rounded-full h-12 text-sm font-semibold shadow-sm cursor-pointer"
+              >
+                Send
+              </Button>
+            </form>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
